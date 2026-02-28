@@ -1,6 +1,6 @@
 //! Process window events.
 
-use crate::ConfigMonitor;
+use crate::config::monitor::ConfigMonitor;
 use glutin::config::GetGlConfig;
 use std::borrow::Cow;
 use std::cmp::min;

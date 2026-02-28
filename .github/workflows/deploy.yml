@@ -1,0 +1,35 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ["main"]
+  release:
+    types: [created]
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t alacritty-builder -f packaging/Dockerfile .
+
+      - name: Run Build Container
+        run: |
+          mkdir output
+          docker run --rm -v $(pwd)/output:/output alacritty-builder
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alacritty-gtk-deb
+          path: output/*.deb
+
+      - name: Upload Release Asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: output/*.deb

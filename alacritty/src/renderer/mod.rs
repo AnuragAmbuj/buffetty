@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::ffi::{CStr, CString};
+use std::ops::Deref;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{fmt, ptr};
@@ -92,6 +93,26 @@ pub struct Renderer {
     robustness: bool,
 }
 
+/// Interface for OpenGL context operations required by the renderer.
+pub trait RendererContext {
+    fn make_current(&self);
+    fn get_proc_address(&self, symbol: &CStr) -> *const std::ffi::c_void;
+    fn renderer_api(&self) -> ContextApi;
+}
+
+// Implement for Glutin's PossiblyCurrentContext
+impl RendererContext for PossiblyCurrentContext {
+    fn make_current(&self) {
+        // In Alacritty's existing flow, make_current is handled by the caller or implicitly.
+    }
+    fn get_proc_address(&self, symbol: &CStr) -> *const std::ffi::c_void {
+        self.display().get_proc_address(symbol)
+    }
+    fn renderer_api(&self) -> ContextApi {
+        self.context_api()
+    }
+}
+
 /// Wrapper around gl::GetString with error checking and reporting.
 fn gl_get_string(
     string_id: gl::types::GLenum,
@@ -116,17 +137,16 @@ impl Renderer {
     ///
     /// This will automatically pick between the GLES2 and GLSL3 renderer based on the GPU's
     /// supported OpenGL version.
-    pub fn new(
-        context: &PossiblyCurrentContext,
+    pub fn new<C: RendererContext>(
+        context: &C,
         renderer_preference: Option<RendererPreference>,
     ) -> Result<Self, Error> {
         // We need to load OpenGL functions once per instance, but only after we make our context
         // current due to WGL limitations.
         if !GL_FUNS_LOADED.swap(true, Ordering::Relaxed) {
-            let gl_display = context.display();
             gl::load_with(|symbol| {
                 let symbol = CString::new(symbol).unwrap();
-                gl_display.get_proc_address(symbol.as_c_str()).cast()
+                context.get_proc_address(symbol.as_c_str()).cast()
             });
         }
 
@@ -140,7 +160,7 @@ impl Renderer {
         // Check if robustness is supported.
         let robustness = Self::supports_robustness();
 
-        let is_gles_context = matches!(context.context_api(), ContextApi::Gles(_));
+        let is_gles_context = matches!(context.renderer_api(), ContextApi::Gles(_));
 
         // Use the config option to enforce a particular renderer configuration.
         let (use_glsl3, allow_dsb) = match renderer_preference {

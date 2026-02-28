@@ -1,0 +1,15 @@
+[package]
+name = "alacritty_gtk"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+alacritty = { path = "../alacritty" }
+alacritty_terminal = { path = "../alacritty_terminal" }
+gtk4 = "0.9"
+glib = "0.20"
+cairo-rs = "0.20"
+log = "0.4"
+env_logger = "0.11"
+libloading = "0.8"

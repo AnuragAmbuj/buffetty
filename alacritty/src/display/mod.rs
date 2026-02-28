@@ -591,7 +591,7 @@ impl Display {
         self.context.make_current(&self.surface).expect("failed to reativate context after reset.");
 
         // Recreate renderer.
-        let renderer = Renderer::new(&self.context, self.renderer_preference)
+        let renderer = Renderer::new(&*self.context, self.renderer_preference)
             .expect("failed to recreate renderer after reset");
         self.renderer = ManuallyDrop::new(renderer);
 

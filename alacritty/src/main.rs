@@ -27,42 +27,39 @@ use winit::raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
 
 use alacritty_terminal::tty;
 
-mod cli;
-mod clipboard;
-mod config;
-mod daemon;
-mod display;
-mod event;
-mod input;
+use alacritty::cli;
+use alacritty::clipboard;
+use alacritty::config;
+use alacritty::daemon;
+use alacritty::display;
+use alacritty::event;
+use alacritty::gl;
+use alacritty::input;
 #[cfg(unix)]
-mod ipc;
-mod logging;
+use alacritty::ipc;
+use alacritty::logging;
 #[cfg(target_os = "macos")]
-mod macos;
-mod message_bar;
-mod migrate;
+use alacritty::macos;
+use alacritty::message_bar;
+use alacritty::migrate;
 #[cfg(windows)]
-mod panic;
-mod renderer;
-mod scheduler;
-mod string;
-mod window_context;
-
-mod gl {
-    #![allow(clippy::all, unsafe_op_in_unsafe_fn)]
-    include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
-}
+use alacritty::panic;
+use alacritty::renderer;
+use alacritty::scheduler;
+use alacritty::string;
+use alacritty::window_context;
 
 #[cfg(unix)]
-use crate::cli::MessageOptions;
+#[cfg(unix)]
+use cli::MessageOptions;
 #[cfg(not(any(target_os = "macos", windows)))]
-use crate::cli::SocketMessage;
-use crate::cli::{Options, Subcommands};
-use crate::config::UiConfig;
-use crate::config::monitor::ConfigMonitor;
-use crate::event::{Event, Processor};
+use cli::SocketMessage;
+use cli::{Options, Subcommands};
+use config::UiConfig;
+use config::monitor::ConfigMonitor;
+use event::{Event, Processor};
 #[cfg(target_os = "macos")]
-use crate::macos::locale;
+use macos::locale;
 
 fn main() -> Result<(), Box<dyn Error>> {
     #[cfg(windows)]
